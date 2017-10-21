@@ -7,3 +7,5 @@ To compile this program all images, sound, and java files should live in the sam
 Full netbeans project included.
 
 I appologize if any aspects of the game don't look good on your computer. Attached is a picture of how it runs on my computer
+
+![ScreenShot](SetGameCapture.PNG)

@@ -1,38 +1,34 @@
 package setgame;
 
+/**
+ * @author Noah Newdorf
+ */
 import java.awt.Color;
-import java.awt.event.MouseListener;
 import java.io.IOException;
 import java.io.InputStream;
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Stack;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import sun.audio.AudioPlayer;
 import sun.audio.AudioStream;
 
-/**
- * @author Noah Newdorf
- */
 public class SetGame extends javax.swing.JFrame {
 
     private int setsMade = 0;
     private Stack<Card> deck = null;
 
-    //colors have changed, names maynot represent colors
     private final Color nutrualDarkBlue = new Color(0, 0, 153);
     private final Color selectGreen = new Color(51, 204, 0);
     private final Color darkGreen = new Color(0, 153, 51);
     private final Color lightGreen = new Color(0, 180, 51);
     private final ArrayList<Integer> selected;
     private final JLabel lables[];
-    private final JPanel cardSpotJPanels[];
+    private final JPanel cardSpotJPanels[]; //an array of the 12 card spots
     private final Card cardsOnBoard[] = new Card[12];
     private boolean canHint = true;
     private long gameStartTime; // when pressing the start button capture that time and make it the gameStartTime
@@ -53,12 +49,17 @@ public class SetGame extends javax.swing.JFrame {
         this.setVisible(true);
     }
 
-    // checks the cards on the board to ensure player wont get stuck without playable set
+    /**
+     * Checks all card set permutations to ensure player has a set to make. If
+     * there is a valid set on the board, stop and return true
+     *
+     * @return is there a set on the board?
+     */
     private boolean isSetOnBoard() {
         for (int i = 0; i < 9; i++) {
             for (int j = i + 1; j < 11; j++) {
                 for (int k = j + 1; k < 12; k++) {
-                    if (this.checkSet(cardsOnBoard[i], cardsOnBoard[j], cardsOnBoard[k])) {
+                    if (this.isSet(cardsOnBoard[i], cardsOnBoard[j], cardsOnBoard[k], false)) {
                         return true;
                     }
                 }
@@ -67,66 +68,61 @@ public class SetGame extends javax.swing.JFrame {
         return false;
     }
 
-    // returns t/f for valid set with no output
-    public static boolean checkSet(Card c1, Card c2, Card c3) {
+    /**
+     * Used to check validity of a set. Output determines if feedbackJPanel gets
+     * updated
+     *
+     * @param c1 card 1 of purposed set
+     * @param c2 card 2 of purposed set
+     * @param c3 card 3 of purposed set
+     * @param output determines if there is any output to feedbackJPanel
+     * @return
+     */
+    private boolean isSet(Card c1, Card c2, Card c3, boolean output) {
         boolean colorOk = false, shapeOk = false, fillOk = false, numberOk = false;
+        //Check all colors are the same
         if ((c1.color.equals(c2.color) && c2.color.equals(c3.color) && c1.color.equals(c3.color))) {
             colorOk = true;
+            //else check all colors are different
         } else if (!c1.color.equals(c2.color) && !c2.color.equals(c3.color) && !c1.color.equals(c3.color)) {
             colorOk = true;
         }
+        //Check all fill styles are the same
         if ((c1.fill.equals(c2.fill) && c2.fill.equals(c3.fill) && c1.fill.equals(c3.fill))) {
             fillOk = true;
+            //else check all colors are different
         } else if (!c1.fill.equals(c2.fill) && !c2.fill.equals(c3.fill) && !c1.fill.equals(c3.fill)) {
             fillOk = true;
         }
+        //Check if cards share number of shapes
         if ((c1.number.equals(c2.number) && c2.number.equals(c3.number) && c1.number.equals(c3.number))) {
             numberOk = true;
+            //else check all cards have different number of shapes
         } else if (!c1.number.equals(c2.number) && !c2.number.equals(c3.number) && !c1.number.equals(c3.number)) {
             numberOk = true;
         }
+        // same for shape type..
         if ((c1.type.equals(c2.type) && c2.type.equals(c3.type) && c1.type.equals(c3.type))) {
             shapeOk = true;
         } else if (!c1.type.equals(c2.type) && !c2.type.equals(c3.type) && !c1.type.equals(c3.type)) {
             shapeOk = true;
         }
+        if (output == true) {
+            String text = "   Color\tFill\tNumber\tShape"
+                    + "\n1) " + c1.color + "\t" + c1.fill + "\t" + c1.number + "\t" + c1.type
+                    + "\n2) " + c2.color + "\t" + c2.fill + "\t" + c2.number + "\t" + c2.type
+                    + "\n3) " + c3.color + "\t" + c3.fill + "\t" + c3.number + "\t" + c3.type
+                    + "\n    " + (colorOk ? "good" : "bad") + "\t" + (fillOk ? "good" : "bad") + "\t" + (numberOk ? "good" : "bad") + "\t" + (shapeOk ? "good" : "bad")
+                    + (colorOk && fillOk && numberOk && shapeOk ? "\n\t- - - Good Set - - -" : "\n\t- - - Bad Set - - -");
+            feedbackJTextArea.setText(text);
+        }
+        //Only a valid set if all fields are correct (shape, color, fill, number)
         return colorOk && shapeOk && fillOk && numberOk;
     }
 
-    // used internally to check validity of a set and output results to feedbackJPanel
-    private boolean isSet(Card c1, Card c2, Card c3) {
-        boolean colorOk = false, shapeOk = false, fillOk = false, numberOk = false;
-        if ((c1.color.equals(c2.color) && c2.color.equals(c3.color) && c1.color.equals(c3.color))) {
-            colorOk = true;
-        } else if (!c1.color.equals(c2.color) && !c2.color.equals(c3.color) && !c1.color.equals(c3.color)) {
-            colorOk = true;
-        }
-        if ((c1.fill.equals(c2.fill) && c2.fill.equals(c3.fill) && c1.fill.equals(c3.fill))) {
-            fillOk = true;
-        } else if (!c1.fill.equals(c2.fill) && !c2.fill.equals(c3.fill) && !c1.fill.equals(c3.fill)) {
-            fillOk = true;
-        }
-        if ((c1.number.equals(c2.number) && c2.number.equals(c3.number) && c1.number.equals(c3.number))) {
-            numberOk = true;
-        } else if (!c1.number.equals(c2.number) && !c2.number.equals(c3.number) && !c1.number.equals(c3.number)) {
-            numberOk = true;
-        }
-        if ((c1.type.equals(c2.type) && c2.type.equals(c3.type) && c1.type.equals(c3.type))) {
-            shapeOk = true;
-        } else if (!c1.type.equals(c2.type) && !c2.type.equals(c3.type) && !c1.type.equals(c3.type)) {
-            shapeOk = true;
-        }
-        String text = "   Color\tFill\tNumber\tShape"
-                + "\n1) " + c1.color + "\t" + c1.fill + "\t" + c1.number + "\t" + c1.type
-                + "\n2) " + c2.color + "\t" + c2.fill + "\t" + c2.number + "\t" + c2.type
-                + "\n3) " + c3.color + "\t" + c3.fill + "\t" + c3.number + "\t" + c3.type
-                + "\n    " + (colorOk ? "good" : "bad") + "\t" + (fillOk ? "good" : "bad") + "\t" + (numberOk ? "good" : "bad") + "\t" + (shapeOk ? "good" : "bad")
-                + (colorOk && fillOk && numberOk && shapeOk ? "\n\t- - - Good Set - - -" : "\n\t- - - Bad Set - - -");
-        feedbackJTextArea.setText(text);
-        return colorOk && shapeOk && fillOk && numberOk;
-    }
-
-    // makes a deck of one of each card
+    /**
+     * Create the deck to have one of each card
+     */
     private void initDeck() {
         hintsUsed = 0;
         badSets = 0;
@@ -146,15 +142,20 @@ public class SetGame extends javax.swing.JFrame {
         }
         Collections.shuffle(deck);
         deck.stream().forEach((c) -> {
-            this.deck.push(c);
+            this.deck.push(c);            
         });
     }
 
-    // gets the corret html string for making a card face
+    /**
+     * generates the correct html string for making a card face
+     */
     private String pictureHtml(Card card) {
         String html = "<html>";
+        // card.number.ordinal() + 1 is so that if a card's number of shapes is 2 it will run 2 times
         for (int i = 0; i < card.number.ordinal() + 1; i++) {
-            html += "<img src=\"" + SetGame.class.getResource(card.resourceName) + "\" alt=\"" + SetGame.class.getResource(card.resourceName) + "\"height=\"50\" width=\"90\"/><br>";
+            html += "<img src=\"" + SetGame.class.getResource(card.resourceName)
+                    + "\" alt=\"" + SetGame.class.getResource(card.resourceName)
+                    + "\"height=\"50\" width=\"90\"/><br>";
         }
         html += "</html>";
         return html;
@@ -166,6 +167,7 @@ public class SetGame extends javax.swing.JFrame {
      * regenerated by the Form Editor.
      */
     @SuppressWarnings("unchecked")
+
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
@@ -225,7 +227,7 @@ public class SetGame extends javax.swing.JFrame {
 
         backgroundJPanel.setBackground(new java.awt.Color(190, 190, 190));
 
-        cardSpotJPanel.setBackground(new java.awt.Color(215, 215, 225));
+        cardSpotJPanel.setBackground(new java.awt.Color(210, 210, 215));
 
         cardSpotJPanel1.setBackground(new java.awt.Color(0, 0, 153));
         cardSpotJPanel1.setPreferredSize(new java.awt.Dimension(125, 225));
@@ -235,7 +237,7 @@ public class SetGame extends javax.swing.JFrame {
             }
         });
 
-        jLabel1.setBackground(new java.awt.Color(250, 250, 250));
+        jLabel1.setBackground(new java.awt.Color(255, 255, 255));
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
@@ -279,7 +281,7 @@ public class SetGame extends javax.swing.JFrame {
             }
         });
 
-        jLabel2.setBackground(new java.awt.Color(250, 250, 250));
+        jLabel2.setBackground(new java.awt.Color(255, 255, 255));
 
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
@@ -322,7 +324,7 @@ public class SetGame extends javax.swing.JFrame {
             }
         });
 
-        jLabel3.setBackground(new java.awt.Color(250, 250, 250));
+        jLabel3.setBackground(new java.awt.Color(255, 255, 255));
 
         javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
         jPanel3.setLayout(jPanel3Layout);
@@ -366,7 +368,7 @@ public class SetGame extends javax.swing.JFrame {
             }
         });
 
-        jLabel4.setBackground(new java.awt.Color(250, 250, 250));
+        jLabel4.setBackground(new java.awt.Color(255, 255, 255));
 
         javax.swing.GroupLayout jPanel4Layout = new javax.swing.GroupLayout(jPanel4);
         jPanel4.setLayout(jPanel4Layout);
@@ -409,7 +411,7 @@ public class SetGame extends javax.swing.JFrame {
             }
         });
 
-        jLabel5.setBackground(new java.awt.Color(250, 250, 250));
+        jLabel5.setBackground(new java.awt.Color(255, 255, 255));
 
         javax.swing.GroupLayout jPanel5Layout = new javax.swing.GroupLayout(jPanel5);
         jPanel5.setLayout(jPanel5Layout);
@@ -452,7 +454,7 @@ public class SetGame extends javax.swing.JFrame {
             }
         });
 
-        jLabel6.setBackground(new java.awt.Color(250, 250, 250));
+        jLabel6.setBackground(new java.awt.Color(255, 255, 255));
 
         javax.swing.GroupLayout jPanel6Layout = new javax.swing.GroupLayout(jPanel6);
         jPanel6.setLayout(jPanel6Layout);
@@ -495,7 +497,7 @@ public class SetGame extends javax.swing.JFrame {
             }
         });
 
-        jLabel7.setBackground(new java.awt.Color(250, 250, 250));
+        jLabel7.setBackground(new java.awt.Color(255, 255, 255));
 
         javax.swing.GroupLayout jPanel7Layout = new javax.swing.GroupLayout(jPanel7);
         jPanel7.setLayout(jPanel7Layout);
@@ -538,7 +540,7 @@ public class SetGame extends javax.swing.JFrame {
             }
         });
 
-        jLabel8.setBackground(new java.awt.Color(250, 250, 250));
+        jLabel8.setBackground(new java.awt.Color(255, 255, 255));
 
         javax.swing.GroupLayout jPanel8Layout = new javax.swing.GroupLayout(jPanel8);
         jPanel8.setLayout(jPanel8Layout);
@@ -581,7 +583,7 @@ public class SetGame extends javax.swing.JFrame {
             }
         });
 
-        jLabel9.setBackground(new java.awt.Color(250, 250, 250));
+        jLabel9.setBackground(new java.awt.Color(255, 255, 255));
 
         javax.swing.GroupLayout jPanel9Layout = new javax.swing.GroupLayout(jPanel9);
         jPanel9.setLayout(jPanel9Layout);
@@ -624,7 +626,7 @@ public class SetGame extends javax.swing.JFrame {
             }
         });
 
-        jLabel10.setBackground(new java.awt.Color(250, 250, 250));
+        jLabel10.setBackground(new java.awt.Color(255, 255, 255));
 
         javax.swing.GroupLayout jPanel10Layout = new javax.swing.GroupLayout(jPanel10);
         jPanel10.setLayout(jPanel10Layout);
@@ -667,7 +669,7 @@ public class SetGame extends javax.swing.JFrame {
             }
         });
 
-        jLabel11.setBackground(new java.awt.Color(250, 250, 250));
+        jLabel11.setBackground(new java.awt.Color(255, 255, 255));
 
         javax.swing.GroupLayout jPanel11Layout = new javax.swing.GroupLayout(jPanel11);
         jPanel11.setLayout(jPanel11Layout);
@@ -710,7 +712,7 @@ public class SetGame extends javax.swing.JFrame {
             }
         });
 
-        jLabel12.setBackground(new java.awt.Color(250, 250, 250));
+        jLabel12.setBackground(new java.awt.Color(255, 255, 255));
 
         javax.swing.GroupLayout jPanel12Layout = new javax.swing.GroupLayout(jPanel12);
         jPanel12.setLayout(jPanel12Layout);
@@ -970,163 +972,69 @@ public class SetGame extends javax.swing.JFrame {
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
-    // <editor-fold defaultstate="collapsed" desc="--cardSpotJpanelMouseClicked Methods--">
 
-
-    private void cardSpotJPanel1MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_cardSpotJPanel1MouseClicked
-        if (startJButton.isEnabled()) {
+    private void cardSpotClicked(int cardSpot) {
+        if (startJButton.isEnabled()) { //game hasn't started yet
             return;
         }
-        if (!cardSpotJPanel1.getBackground().equals(selectGreen) && selected.size() < 3) {
-            cardSpotJPanel1.setBackground(selectGreen);
-            selected.add(0);
+
+        if (!selected.contains(cardSpot) && selected.size() < 3) {//cardSpotJPanels[cardNum].getBackground().equals(selectGreen)
+            selected.add(cardSpot);
+            cardSpotJPanels[cardSpot].setBackground(selectGreen);
         } else {
-            cardSpotJPanel1.setBackground(nutrualDarkBlue);
-            selected.remove(new Integer(0));
+            cardSpotJPanels[cardSpot].setBackground(nutrualDarkBlue);
+            selected.remove(new Integer(cardSpot));
         }
+    }
+// <editor-fold defaultstate="collapsed" desc="--cardSpotJpanelMouseClicked Methods--">
+
+    private void cardSpotJPanel1MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_cardSpotJPanel1MouseClicked
+        cardSpotClicked(0);
     }//GEN-LAST:event_cardSpotJPanel1MouseClicked
 
     private void cardSpotJPanel2MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_cardSpotJPanel2MouseClicked
-        if (startJButton.isEnabled()) {
-            return;
-        }
-        if (!cardSpotJPanel2.getBackground().equals(selectGreen) && selected.size() < 3) {
-            cardSpotJPanel2.setBackground(selectGreen);
-            selected.add(1);
-        } else {
-            cardSpotJPanel2.setBackground(nutrualDarkBlue);
-            selected.remove(new Integer(1));
-        }
+        cardSpotClicked(1);
     }//GEN-LAST:event_cardSpotJPanel2MouseClicked
 
     private void cardSpotJPanel3MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_cardSpotJPanel3MouseClicked
-        if (startJButton.isEnabled()) {
-            return;
-        }
-        if (!cardSpotJPanel3.getBackground().equals(selectGreen) && selected.size() < 3) {
-            cardSpotJPanel3.setBackground(selectGreen);
-            selected.add(2);
-        } else {
-            cardSpotJPanel3.setBackground(nutrualDarkBlue);
-            selected.remove(new Integer(2));
-        }
+        cardSpotClicked(2);
     }//GEN-LAST:event_cardSpotJPanel3MouseClicked
 
     private void cardSpotJPanel4MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_cardSpotJPanel4MouseClicked
-        if (startJButton.isEnabled()) {
-            return;
-        }
-        if (!cardSpotJPanel4.getBackground().equals(selectGreen) && selected.size() < 3) {
-            cardSpotJPanel4.setBackground(selectGreen);
-            selected.add(3);
-        } else {
-            cardSpotJPanel4.setBackground(nutrualDarkBlue);
-            selected.remove(new Integer(3));
-        }
+        cardSpotClicked(3);
     }//GEN-LAST:event_cardSpotJPanel4MouseClicked
 
     private void cardSpotJPanel5MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_cardSpotJPanel5MouseClicked
-        if (startJButton.isEnabled()) {
-            return;
-        }
-        if (!cardSpotJPanel5.getBackground().equals(selectGreen) && selected.size() < 3) {
-            cardSpotJPanel5.setBackground(selectGreen);
-            selected.add(4);
-        } else {
-            cardSpotJPanel5.setBackground(nutrualDarkBlue);
-            selected.remove(new Integer(4));
-        }
+        cardSpotClicked(4);
     }//GEN-LAST:event_cardSpotJPanel5MouseClicked
 
     private void cardSpotJPanel6MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_cardSpotJPanel6MouseClicked
-        if (startJButton.isEnabled()) {
-            return;
-        }
-        if (!cardSpotJPanel6.getBackground().equals(selectGreen) && selected.size() < 3) {
-            cardSpotJPanel6.setBackground(selectGreen);
-            selected.add(5);
-        } else {
-            cardSpotJPanel6.setBackground(nutrualDarkBlue);
-            selected.remove(new Integer(5));
-        }
+        cardSpotClicked(5);
     }//GEN-LAST:event_cardSpotJPanel6MouseClicked
 
     private void cardSpotJPanel7MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_cardSpotJPanel7MouseClicked
-        if (startJButton.isEnabled()) {
-            return;
-        }
-        if (!cardSpotJPanel7.getBackground().equals(selectGreen) && selected.size() < 3) {
-            cardSpotJPanel7.setBackground(selectGreen);
-            selected.add(6);
-        } else {
-            cardSpotJPanel7.setBackground(nutrualDarkBlue);
-            selected.remove(new Integer(6));
-        }
+        cardSpotClicked(6);
     }//GEN-LAST:event_cardSpotJPanel7MouseClicked
 
     private void cardSpotJPanel8MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_cardSpotJPanel8MouseClicked
-        if (startJButton.isEnabled()) {
-            return;
-        }
-        if (!cardSpotJPanel8.getBackground().equals(selectGreen) && selected.size() < 3) {
-            cardSpotJPanel8.setBackground(selectGreen);
-            selected.add(7);
-        } else {
-            cardSpotJPanel8.setBackground(nutrualDarkBlue);
-            selected.remove(new Integer(7));
-        }
+        cardSpotClicked(7);
     }//GEN-LAST:event_cardSpotJPanel8MouseClicked
 
     private void cardSpotJPanel9MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_cardSpotJPanel9MouseClicked
-        if (startJButton.isEnabled()) {
-            return;
-        }
-        if (!cardSpotJPanel9.getBackground().equals(selectGreen) && selected.size() < 3) {
-            cardSpotJPanel9.setBackground(selectGreen);
-            selected.add(8);
-        } else {
-            cardSpotJPanel9.setBackground(nutrualDarkBlue);
-            selected.remove(new Integer(8));
-        }
+
+        cardSpotClicked(8);
     }//GEN-LAST:event_cardSpotJPanel9MouseClicked
 
     private void cardSpotJPanel10MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_cardSpotJPanel10MouseClicked
-        if (startJButton.isEnabled()) {
-            return;
-        }
-        if (!cardSpotJPanel10.getBackground().equals(selectGreen) && selected.size() < 3) {
-            cardSpotJPanel10.setBackground(selectGreen);
-            selected.add(9);
-        } else {
-            cardSpotJPanel10.setBackground(nutrualDarkBlue);
-            selected.remove(new Integer(9));
-        }
+        cardSpotClicked(9);
     }//GEN-LAST:event_cardSpotJPanel10MouseClicked
 
     private void cardSpotJPanel11MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_cardSpotJPanel11MouseClicked
-        if (startJButton.isEnabled()) {
-            return;
-        }
-        if (!cardSpotJPanel11.getBackground().equals(selectGreen) && selected.size() < 3) {
-            cardSpotJPanel11.setBackground(selectGreen);
-            selected.add(10);
-        } else {
-            cardSpotJPanel11.setBackground(nutrualDarkBlue);
-            selected.remove(new Integer(10));
-        }
+        cardSpotClicked(10);
     }//GEN-LAST:event_cardSpotJPanel11MouseClicked
 
     private void cardSpotJPanel12MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_cardSpotJPanel12MouseClicked
-        if (startJButton.isEnabled()) {
-            return;
-        }
-        if (!cardSpotJPanel12.getBackground().equals(selectGreen) && selected.size() < 3) {
-            cardSpotJPanel12.setBackground(selectGreen);
-            selected.add(11);
-        } else {
-            cardSpotJPanel12.setBackground(nutrualDarkBlue);
-            selected.remove(new Integer(11));
-        }
+        cardSpotClicked(11);
     }//GEN-LAST:event_cardSpotJPanel12MouseClicked
 // </editor-fold>
     private void startJButtonMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_startJButtonMouseClicked
@@ -1142,9 +1050,9 @@ public class SetGame extends javax.swing.JFrame {
             cardsOnBoard[i] = (deck.pop());
             lables[i].setText(this.pictureHtml((cardsOnBoard[i])));
         }
-        // if after the cards are delt there are no sets to be made take all the cards back and re-deal thems
+// if after the cards are delt, there are no sets to be made, take the cards back and re-deal them
         if (!this.isSetOnBoard()) {
-            while (!this.isSetOnBoard()) {
+            while (!this.isSetOnBoard()) { //will try again if no set is possible after first re-deal
                 for (int i = 0; i < cardsOnBoard.length; i++) {
                     deck.push(cardsOnBoard[i]);
                 }
@@ -1160,16 +1068,16 @@ public class SetGame extends javax.swing.JFrame {
         fastestSetTime = Long.MAX_VALUE;
         slowestSetTime = 0;
         cardsInDeckJLabel.setText("Cards in deck: " + deck.size());
-//        this.isSetOnBoard(); // not sure why this is here, might be vital but commenting out for now
     }//GEN-LAST:event_startJButtonMouseClicked
 
+    //simple highlight on mouseover
     private void startJButtonMouseEntered(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_startJButtonMouseEntered
         if (!startJButton.isEnabled()) {
             return;
         }
         startJButton.setBackground(lightGreen);
     }//GEN-LAST:event_startJButtonMouseEntered
-
+    //return to regular color onMouseExit
     private void startJButtonMouseExited(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_startJButtonMouseExited
         if (!startJButton.isEnabled()) {
             return;
@@ -1193,12 +1101,6 @@ public class SetGame extends javax.swing.JFrame {
             cardSpotJPanels[i].setBackground(nutrualDarkBlue);
             cardsOnBoard[i] = deck.pop();
             lables[i].setText(this.pictureHtml((cardsOnBoard[i])));
-        }
-    }
-
-    private void flipSetEnabledComponents(JComponent... comps) {
-        for (JComponent comp : comps) {
-            comp.setEnabled(!comp.isEnabled());
         }
     }
 
@@ -1231,18 +1133,19 @@ public class SetGame extends javax.swing.JFrame {
                 + badSets + " bad sets were made.");
 
     }
+
     private void makeSetJButtonMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_makeSetJButtonMouseClicked
         if (!makeSetJButton.isEnabled()) {
             return;
         }
-        if (selected.size() != 3) { // if not 3 cards were selected
+        if (selected.size() != 3) { //not 3 cards selected
             badSets++;
             playSound("badsound");
             feedbackJTextArea.setText("You need 3 cards selected to make a set.\nTry Again.");
             return;
         } else {
-            selected.sort(null); // lets the cards be shown in the order they appear on the board on the feedback area
-            if (this.isSet(cardsOnBoard[selected.get(0)], cardsOnBoard[selected.get(1)], cardsOnBoard[selected.get(2)])) {
+            selected.sort(null); // lets the cards be shown in the order they appear on the board in the feedback area
+            if (this.isSet(cardsOnBoard[selected.get(0)], cardsOnBoard[selected.get(1)], cardsOnBoard[selected.get(2)], true)) {
                 playSound("goodsound");
                 long setTime = System.currentTimeMillis() - setStartTime;
                 if (fastestSetTime > setTime) {
@@ -1259,7 +1162,7 @@ public class SetGame extends javax.swing.JFrame {
 
                 this.resetCardSpots();
                 // if the deck is empty re-init the game
-                if (deck.isEmpty()) { //CONTINUE FROM HRE
+                if (deck.isEmpty()) {
                     this.reinitGame();
                 }
                 this.ensureSetOnBoard();
@@ -1272,14 +1175,20 @@ public class SetGame extends javax.swing.JFrame {
         }
     }//GEN-LAST:event_makeSetJButtonMouseClicked
 
+    /**
+     * If after a set is made and the cards get replaced there is no possible
+     * set to be made on the board, take those cards back off the board, put
+     * them into the deck, shuffle and re-deal the cards. Then check if a set is
+     * now possible, and repeat if necessary.
+     */
     private void ensureSetOnBoard() {
-        if (!this.isSetOnBoard()) {
-            while (!this.isSetOnBoard()) {
-                for (Integer i : selected) {
+        if (!isSetOnBoard()) {
+            while (!isSetOnBoard()) {
+                for (int i : selected) {
                     deck.push(cardsOnBoard[i]);
                 }
                 Collections.shuffle(deck);
-                for (Integer i : selected) {
+                for (int i : selected) {
                     cardsOnBoard[i] = deck.pop();
                     lables[i].setText(this.pictureHtml((cardsOnBoard[i])));
                 }
@@ -1308,6 +1217,9 @@ public class SetGame extends javax.swing.JFrame {
         selected.clear();
     }//GEN-LAST:event_deselectJButtonMouseClicked
 
+    /**
+     * Displays rules from the start if someone needs to read them again
+     */
     private void readRulesJButtonMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_readRulesJButtonMouseClicked
         feedbackJTextArea.setText(" - - - - - - - - - - - - - - - - Rules of the game - - - - - - - - - - - - - - - -\n"
                 + "The object of the game is to make a SET of 3. A group of  3 can be a SET\n"
@@ -1323,62 +1235,72 @@ public class SetGame extends javax.swing.JFrame {
                 + "");
     }//GEN-LAST:event_readRulesJButtonMouseClicked
 
+    /**
+     * Collect all valid sets then highlight two of the three cards in one a
+     * random set
+     */
     private void runHintThread() {
         new Thread() {
             @Override
             public void run() {
                 try {
-                    InputStream inputStream = getClass().getResourceAsStream("fingersnap.wav");
-                    InputStream inputStream2 = getClass().getResourceAsStream("fingersnap.wav");
-                    AudioStream audioStream = new AudioStream(inputStream);
-                    AudioStream audioStream2 = new AudioStream(inputStream2);
                     ArrayList<int[]> sets = new ArrayList<>();
+                    //put all valid sets as an array of positions in sets
                     for (int i = 0; i < 9; i++) {
                         for (int j = i + 1; j < 11; j++) {
                             for (int k = j + 1; k < 12; k++) {
-                                if (SetGame.checkSet(cardsOnBoard[i], cardsOnBoard[j], cardsOnBoard[k])) {
+                                if (isSet(cardsOnBoard[i], cardsOnBoard[j], cardsOnBoard[k], false)) {
                                     int setNums[] = {i, j, k};
                                     sets.add(setNums);
                                 }
                             }
                         }
                     }
-                    Collections.shuffle(sets);
-                    int hintSet[] = sets.get(0);
-                    Collections.shuffle(Arrays.asList(hintSet));
-
-                    int x = hintSet[0];
-                    int y = hintSet[1];
-                    Color originalColor1 = cardSpotJPanels[x].getBackground();
-                    Color originalColor2 = cardSpotJPanels[y].getBackground();
+                    //selects a random set, but consistently the same one
+                    //if there are multiple choices on the board                 
+                    int sum = 0;
+                    for (int i = 0; i < sets.size(); i++) {
+                        for (int j = 0; j < 3; j++) {
+                            sum += sets.get(i)[j];
+                        }
+                    }
+                    int hintSet[] = sets.get(sum % sets.size());
+                    //select 2 cards of set
+                    int c1 = hintSet[0];
+                    int c2 = hintSet[2];
+                    //highlight the cards by flashing their border yellow
+                    Color originalColor1 = cardSpotJPanels[c1].getBackground();
+                    Color originalColor2 = cardSpotJPanels[c2].getBackground();
                     Thread.sleep(50);
-                    cardSpotJPanels[x].setBackground(Color.yellow);
-                    cardSpotJPanels[y].setBackground(Color.yellow);
-                    AudioPlayer.player.start(audioStream);
+                    cardSpotJPanels[c1].setBackground(Color.yellow);
+                    cardSpotJPanels[c2].setBackground(Color.yellow);
+                    playSound("fingersnap");
                     Thread.sleep(110);
-                    cardSpotJPanels[x].setBackground(originalColor1);
-                    cardSpotJPanels[y].setBackground(originalColor2);
+                    cardSpotJPanels[c1].setBackground(originalColor1);
+                    cardSpotJPanels[c2].setBackground(originalColor2);
                     Thread.sleep(110);
-                    cardSpotJPanels[x].setBackground(Color.yellow);
-                    cardSpotJPanels[y].setBackground(Color.yellow);
-                    AudioPlayer.player.start(audioStream2);
+                    cardSpotJPanels[c1].setBackground(Color.yellow);
+                    cardSpotJPanels[c2].setBackground(Color.yellow);
+                    playSound("fingersnap");
                     Thread.sleep(110);
-                    cardSpotJPanels[x].setBackground(originalColor1);
-                    cardSpotJPanels[y].setBackground(originalColor2);
+                    cardSpotJPanels[c1].setBackground(originalColor1);
+                    cardSpotJPanels[c2].setBackground(originalColor2);
                     Thread.sleep(250);
-                } catch (InterruptedException | IOException ex) {
+                } catch (Exception ex) {
                     Logger.getLogger(SetGame.class.getName()).log(Level.SEVERE, null, ex);
                 } finally {
+                    //hint cannot be pressed again until canHint is set back to true
                     canHint = true;
                 }
             }
         }.start();
     }
+
     private void hintJButtonMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_hintJButtonMouseClicked
         if (!canHint || hintJButton.isEnabled() == false) {
             return;
         }
-        canHint = false;//prevents spamming of hint button
+        canHint = false;//prevents spamming of hint button 
         hintsUsed++;
         this.runHintThread();
         // after the hint thread runs boolean canHint will be true
@@ -1400,7 +1322,7 @@ public class SetGame extends javax.swing.JFrame {
         /* Set the Nimbus look and feel */
         //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
         /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
-         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
+         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html
          */
         try {
             for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {

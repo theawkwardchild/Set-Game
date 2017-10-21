@@ -9,7 +9,7 @@ public class Card {
     public final ShapeFill fill;
     public final ShapeNumber number;
     public final ShapeType type;
-    public final String resourceName;
+    public final String resourceName; //the file name
 
     public Card(ShapeColor color, ShapeFill fill, ShapeNumber number, ShapeType type) {
         this.color = color;
@@ -18,14 +18,5 @@ public class Card {
         this.type = type;
         resourceName = color + "_" + fill + "_" + type + ".png"; 
         
-    }
-
-    /**
-     * Card.toString() is used for 
-     * @return 
-     */
-    @Override
-    public String toString() {
-        return "<html>" + color + "<br>" + fill + "<br>" + number + "<br>" + type + "</html>";
     }
 }
